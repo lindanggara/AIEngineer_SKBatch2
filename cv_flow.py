@@ -10,7 +10,7 @@ USE_MOCK_LLM = True
 PROMPT_VERSION = "v1.0"
 
 
-# ---------- 1. Schema ----------
+#  1. Schema 
 class Skill(BaseModel):
     name: str
     evidence: str
@@ -41,7 +41,7 @@ class Candidate(BaseModel):
     extraction_notes: list[str] = []
 
 
-# ---------- 2. PII minimization ----------
+#  2. PII minimization 
 EMAIL = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
 PHONE = re.compile(r"(?:\+62|0)\d[\d\s-]{7,13}\d")
 
@@ -53,7 +53,7 @@ INJECTION = re.compile(
 )
 
 
-# ---------- 3. LLM extraction ----------
+#  3. LLM extraction 
 SYSTEM_PROMPT = """Kamu adalah mesin ekstraksi data CV. Aturan:
 1. Ekstrak HANYA informasi yang tertulis eksplisit di CV. Jika tidak ada, isi null atau list kosong.
 2. Setiap skill/pengalaman/pendidikan WAJIB punya field `evidence` berisi kutipan VERBATIM dari CV.
@@ -78,7 +78,7 @@ def extract(cv_masked: str, retries: int = 1) -> Candidate:
     raise RuntimeError("Extraction gagal setelah retry -> kirim ke review manual")
 
 
-# ---------- 4. Grounding check ----------
+#  4. Grounding check 
 def norm(s: str) -> str:
     return re.sub(r"\s+", " ", s).lower().strip()
 
@@ -107,7 +107,7 @@ def ground(c: Candidate, cv_text: str):
     return c, rate, notes
 
 
-# ---------- 5. Deterministic matching ----------
+#  5. Deterministic matching 
 JOB = {
     "title": "Junior Data Analyst",
     "must_have": ["sql", "python", "data visualization"],
@@ -138,7 +138,7 @@ def total_years(c: Candidate) -> float:
     return round(m / 12, 1)
 
 
-# ---------- 6. Recommendation ----------
+#  6. Recommendation 
 def recommend(c: Candidate, grounding_rate: float, ground_notes: list[str], cv_text: str) -> dict:
     must_hit = [r for r in JOB["must_have"] if has_skill(c.skills, r)]
     must_miss = [r for r in JOB["must_have"] if r not in must_hit]
@@ -188,7 +188,7 @@ def recommend(c: Candidate, grounding_rate: float, ground_notes: list[str], cv_t
     }
 
 
-# ---------- Pipeline ----------
+#  Pipeline 
 def run(cv_text: str) -> dict:
     masked = mask_pii(cv_text)
     cand = extract(masked)
@@ -202,7 +202,7 @@ def run(cv_text: str) -> dict:
     }
 
 
-# ---------- Mock data ----------
+#  Mock data 
 SAMPLE_CV = """Rina Mock
 Jakarta | rina.mock@example.com | 0812-0000-0000
 Data enthusiast with hands-on experience in reporting and dashboards.
@@ -250,7 +250,7 @@ MOCK_LLM_RESPONSE = json.dumps({
 })
 
 
-# ---------- Tes sederhana ----------
+#  Tes sederhana 
 def test_hallucinated_skill_is_dropped():
     out = run(SAMPLE_CV)
     names = [s["name"] for s in out["candidate"]["skills"]]
